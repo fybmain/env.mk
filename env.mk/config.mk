@@ -17,4 +17,8 @@
 # USA
 
 
+ENV_MK_ADDON_INC_PATH=*/inc.mk
+ENV_MK_WD_INC_NAME=inc.mk
+
+ENV_MK_MAKEFILE_DEBUG=false
 

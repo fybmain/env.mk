@@ -56,6 +56,11 @@ ENV_MK_PRJ_ABSPATH:=$(call make_word_escape,$(ENV_MK_PRJ_ABSPATH_SHELL))
 $(call ENV_MK_REQUIRE_VAR,ENV_MK_ENV_MK_ABSPATH_SHELL)
 ENV_MK_ENV_MK_ABSPATH:=$(call make_word_escape,$(ENV_MK_ENV_MK_ABSPATH_SHELL))
 
+ifeq (,$(filter $(ENV_MK_PRJ_ABSPATH)/%,$(ENV_MK_ABSPWD)/))
+$(info When using env.mk, the working directory must be under the project directory)
+$(error )
+endif
+
 define ENV_MK_REL_PATH_WITH_CHECK_TMPL=
 $1:=$$(call rel_path,$2,$3)
 ifneq ($$(abspath $3),$$(abspath $2/$$($1)))
@@ -71,16 +76,23 @@ $(call ENV_MK_REL_PATH_WITH_CHECK,ENV_MK_PWD,$$(ENV_MK_PRJ_ABSPATH),$$(ENV_MK_AB
 $(call ENV_MK_REL_PATH_WITH_CHECK,ENV_MK_PRJ_PATH,$$(ENV_MK_ABSPWD),$$(ENV_MK_PRJ_ABSPATH))
 $(call ENV_MK_REL_PATH_WITH_CHECK,ENV_MK_ENV_MK_PATH,$$(ENV_MK_ABSPWD),$$(ENV_MK_ENV_MK_ABSPATH))
 
-ENV_MK_COMPONENT:=util
+ENV_MK_EXEC_HOOK=$(eval $(value $1))
+ENV_MK_EXEC_HOOK_LIST=$(foreach hook,$1,$(call ENV_MK_EXEC_HOOK,$(hook)))
+
+ENV_MK_COMPONENT:=config util
 ENV_MK_COMPONENT+=makeflags build_arch
-ENV_MK_COMPONENT+=config
 
-undefine ENV_MK_INIT_AFTER_HOOK
+undefine ENV_MK_COMP_INIT_AFTER_HOOK
 $(foreach f,$(ENV_MK_COMPONENT),$(call include_makefile,$(ENV_MK_ENV_MK_PATH)/$(f).mk))
-$(foreach hook,$(ENV_MK_INIT_AFTER_HOOK),$(eval $(hook)))
+$(call ENV_MK_EXEC_HOOK_LIST,$(ENV_MK_COMP_INIT_AFTER_HOOK))
 
-ENV_MK_ADDON_INC=$(shell find $(call shell_escape,$(call make_word_deescape,$(ENV_MK_ENV_MK_PATH))/addon) -wholename '*/inc.mk' -printf '%P ')
+ENV_MK_ADDON_INC=$(shell find $(call shell_escape,$(call make_word_deescape,$(ENV_MK_ENV_MK_PATH))/addon) -wholename $(call shell_escape,$(ENV_MK_ADDON_INC_PATH)) -printf '%P ')
+undefine ENV_MK_ADDON_INIT_AFTER_HOOK
 $(foreach f,$(ENV_MK_ADDON_INC),$(call include_makefile,$(ENV_MK_ENV_MK_PATH)$(call make_word_escape,/addon/$(f))))
+$(call ENV_MK_EXEC_HOOK_LIST,$(ENV_MK_ADDON_INIT_AFTER_HOOK))
+
+ENV_MK_WD_INC=$(call -include_makefile,$1$(ENV_MK_WD_INC_NAME))$(if $1,$(call ENV_MK_WD_INC,$(patsubst %../,%,$1)),)
+$(call ENV_MK_WD_INC,$(if $(ENV_MK_PRJ_PATH),$(ENV_MK_PRJ_PATH)/,))
 
 endif
 

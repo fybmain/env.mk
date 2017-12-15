@@ -20,7 +20,7 @@
 #disable built-in rules
 MAKEFLAGS+=r
 
-ifdef MAKEFILE_DEBUG
+ifeq (true,$(ENV_MK_MAKEFILE_DEBUG))
 
 #-d: debug mode of make
 MAKEFLAGS+=d
