@@ -19,7 +19,7 @@
 
 # The following lines are an example of including env.mk in a makefile
 
-ifndef ENV_MK_ACTIVATED
+ifndef ENV_MK
 $(error Required env.mk is not activated)
 endif
 include $(ENV_MK)

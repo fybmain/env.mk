@@ -21,26 +21,22 @@ function ENV_MK_ACTIVATE_DO(){
 	local PRJ_DIR="$(pwd -L)"
 	local SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")";pwd -L)"
 
-	export ENV_MK_ACTIVATED="true"
+	export ENV_MK="$(echo -E "${SRC_DIR}/env.mk"|sed 's/ /\\ /g')"
 	export ENV_MK_PRJ_ABSPATH_SHELL="${PRJ_DIR}"
 	export ENV_MK_ENV_MK_ABSPATH_SHELL="${SRC_DIR}"
 
-	local OLDPATH="${PATH}"
-	export PATH="${SRC_DIR}/bin:${OLDPATH}"
-	export ENV_MK_SHELL_OLDPATH="${OLDPATH}"
+	export ENV_MK_SHELL_OLDPATH="${PATH}"
+	export PATH="${SRC_DIR}/bin:${PATH}"
 	hash -r
 
-	if [ -v PS1 ];then
-		local OLDPS1="${PS1}"
+	# for interactive shells
+	if [ -v PS1 ];then 
 		local PRJ_NAME="$(basename "${PRJ_DIR}")"
-		export PS1="\[\e[1;36m\](${PRJ_NAME})\[\e[0m\]${OLDPS1}"
-		export ENV_MK_SHELL_OLDPS1="${OLDPS1}"
+		export ENV_MK_SHELL_OLDPS1="${PS1}"
+		export PS1="\[\e[1;36m\](${PRJ_NAME})\[\e[0m\]${PS1}"
 	fi
 
-	local DEACTIVATE_COMMAND="'source' '$(echo -E "${SRC_DIR}/deactivate.sh"|sed 's/'\''/'\''\\'\'\''/g')'"
-	alias deactivate="${DEACTIVATE_COMMAND}"
-
-	export ENV_MK="$(echo -E "${SRC_DIR}/env.mk"|sed 's/ /\\ /g')"
+	alias deactivate="'source' '$(echo -E "${SRC_DIR}/deactivate.sh"|sed 's/'\''/'\''\\'\'\''/g')'"
 
 	echo -E "The project directory is set to ${ENV_MK_PRJ_ABSPATH_SHELL}"
 	echo -e "You can use \033[33m\$deactivate\033[0m to deactivate env.mk at any time."
@@ -50,14 +46,16 @@ function ENV_MK_ACTIVATE(){
 	local PRJ_DIR="$(pwd -L)"
 	local SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")";pwd -L)"
 
-	if [ -v ENV_MK_ACTIVATED ];then
-		echo -e "\033[1;31mError: ENV_MK_ACTIVATED has already been set.\033[0m"
+	if [ -v ENV_MK ];then
+		echo -e "\033[1;31mError: ENV_MK has already been set.\033[0m"
 		echo -E "Is there an activated env.mk?"
 		echo -E "Leaving everything unchanged."
 	elif [ "$(echo -E "${SRC_DIR}"|sed -nE -e '/:/{c true' -e ';p;q}')" == "true" ];then
 		echo -E "\033[1;31mError: There should not be ':' in the absolute path of env.mk .\033[0m"
+		echo -E "Leaving everything unchanged."
 #	elif [ "$(echo -E "${PRJ_DIR}"|sed -nE -e '/:/{c true' -e ';p;q}')" == "true" ];then
 #		echo -E "\033[1;31mError: There should not be ':' in \${PWD} .\033[0m"
+#		echo -E "Leaving everything unchanged."
 	else
 		ENV_MK_ACTIVATE_DO
 	fi

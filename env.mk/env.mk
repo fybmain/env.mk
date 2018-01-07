@@ -20,16 +20,23 @@
 ifndef ENV_MK_INCLUDED
 ENV_MK_INCLUDED:=true
 
-ifndef ENV_MK_ACTIVATED
+ifndef ENV_MK
 $(info Required env.mk is not activated)
 $(info Please run make in an environment with env.mk activated)
 $(error )
 endif
 
+ENV_MK_CHAR_SPACE:=$() $()
+ENV_MK_CHAR_COMMA:=,
+define ENV_MK_CHAR_NEWLINE:=
+
+
+endef
+
 shell_escape='$(subst ','\'',$1)'
-make_word_escape=$(shell echo -E $(call shell_escape,$1)|sed 's/!/!e/g;s/ /!s/g;s/\t/!t/g;s/\n/!n/g;s/\r/!r/g;s/,/!c/g')
-make_word_deescape=$(shell echo -E $(call shell_escape,$1)|sed 's/!c/,/g;s/!r/\r/g;s/!n/\n/g;s/!t/\t/g;s/!s/ /g;s/!e/!/g')
-make_word_deescape_include=$(shell echo -E $(call shell_escape,$1)|sed 's/!c/,/g;s/!r/\r/g;s/!n/\n/g;s/!t/\t/g;s/!s/\\ /g;s/!e/!/g')
+make_word_escape=$(subst $(ENV_MK_CHAR_COMMA),!c,$(subst $(ENV_MK_CHAR_NEWLINE),!n,$(subst $(ENV_MK_CHAR_SPACE),!s,$(subst !,!e,$1))))
+make_word_deescape=$(subst !e,!,$(subst !s,$(ENV_MK_CHAR_SPACE),$(subst !n,$(ENV_MK_CHAR_NEWLINE),$(subst !c,$(ENV_MK_CHAR_COMMA),$1))))
+make_word_deescape_include=$(subst !e,!,$(subst !s,\$(ENV_MK_CHAR_SPACE),$(subst !n,$(ENV_MK_CHAR_NEWLINE),$(subst !c,$(ENV_MK_CHAR_COMMA),$1))))
 
 path_drop_tail_slash=$(if $(filter %/,$1),$(call path_drop_tail_slash,$(patsubst %/,%,$1)),$1)
 word_common_prefix=$(shell echo -E $(call shell_escape,$1) $(call shell_escape,$2)|sed -E 's/^(.*).* \1.*$$/\1/')
@@ -80,14 +87,14 @@ ENV_MK_EXEC_HOOK=$(eval $(value $1))
 ENV_MK_EXEC_HOOK_LIST=$(foreach hook,$1,$(call ENV_MK_EXEC_HOOK,$(hook)))
 
 ENV_MK_COMPONENT:=config util
-ENV_MK_COMPONENT+=makeflags build_arch
+ENV_MK_COMPONENT+=makeflags build_arch target_forward
 
-undefine ENV_MK_COMP_INIT_AFTER_HOOK
+ENV_MK_COMP_INIT_AFTER_HOOK:=
 $(foreach f,$(ENV_MK_COMPONENT),$(call include_makefile,$(ENV_MK_ENV_MK_PATH)/$(f).mk))
 $(call ENV_MK_EXEC_HOOK_LIST,$(ENV_MK_COMP_INIT_AFTER_HOOK))
 
 ENV_MK_ADDON_INC=$(shell find $(call shell_escape,$(call make_word_deescape,$(ENV_MK_ENV_MK_PATH))/addon) -wholename $(call shell_escape,$(ENV_MK_ADDON_INC_PATH)) -printf '%P ')
-undefine ENV_MK_ADDON_INIT_AFTER_HOOK
+ENV_MK_ADDON_INIT_AFTER_HOOK:=
 $(foreach f,$(ENV_MK_ADDON_INC),$(call include_makefile,$(ENV_MK_ENV_MK_PATH)$(call make_word_escape,/addon/$(f))))
 $(call ENV_MK_EXEC_HOOK_LIST,$(ENV_MK_ADDON_INIT_AFTER_HOOK))
 

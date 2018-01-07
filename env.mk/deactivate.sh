@@ -23,34 +23,32 @@ function ENV_MK_SHELL_VAR_UNSET(){
 }
 
 function ENV_MK_SHELL_VAR_RECOVER(){
+	if [ ! -v ${2} ];then return;fi
 	export ${1}="${!2}"
 	ENV_MK_SHELL_VAR_UNSET ${2}
 }
 
 function ENV_MK_DEACTIVATE_DO(){
-	ENV_MK_SHELL_VAR_UNSET ENV_MK
-
 	ENV_MK_SHELL_VAR_RECOVER PS1 ENV_MK_SHELL_OLDPS1
-
 	ENV_MK_SHELL_VAR_RECOVER PATH ENV_MK_SHELL_OLDPATH
 	hash -r
 
 	ENV_MK_SHELL_VAR_UNSET ENV_MK_ENV_MK_ABSPATH_SHELL
 	ENV_MK_SHELL_VAR_UNSET ENV_MK_PRJ_ABSPATH_SHELL
-	ENV_MK_SHELL_VAR_UNSET ENV_MK_ACTIVATED
+	ENV_MK_SHELL_VAR_UNSET ENV_MK
 
 	echo -E "env.mk is deactivated."
 }
 
 function ENV_MK_DEACTIVATE(){
-	if [ "${ENV_MK_ACTIVATED}" != "true" ];then
-		echo -e "\033[1;31mError: ENV_MK_ACTIVATED is not true.\033[0m"
+	if [ ! -v ENV_MK ];then
+		echo -e "\033[1;31mError: ENV_MK is not set.\033[0m"
 		echo -E "Did you activate env.mk in this shell?"
 		echo -E "Leaving everything unchanged."
 		return
 	fi
 
-	local REQUIRE_VARS="ENV_MK_SHELL_OLDPATH ENV_MK_SHELL_OLDPS1"
+	local REQUIRE_VARS="ENV_MK_SHELL_OLDPATH"
 	for var in ${REQUIRE_VARS}
 	do
 		if [ ! -v "${var}" ];then
